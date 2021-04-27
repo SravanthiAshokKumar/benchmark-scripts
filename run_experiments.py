@@ -38,7 +38,7 @@ def main(configFile):
     locations_config = read_config['locations_config']
     index_config['minLat'], index_config['minLng'], index_config['maxLat'], index_config['maxLng'] =\
         locations_config['min_lat'], locations_config['min_lng'], locations_config['max_lat'], locations_config['max_lng']
-    numStaticClients = [4]
+    numStaticClients = [40]
     # numMobileClients = [4]
     iterations = [1]
     outfile_prefix = '/home/cetus/new-openmessaging-benchmark/parsed/locations/static_locations_sc_'

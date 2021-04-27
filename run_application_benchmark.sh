@@ -11,10 +11,14 @@ copy_config_data()
         i=0
         for client in $CLIENTS
         do
+            if [ "$i" -ne 0 ]
+            then
+                t=$((i-1))
+                filename="$file_beg$t$file_end"
+                scp $BENCHMARK_HOME/$DATA_DIR/$filename $client:$BENCHMARK_HOME/locations/$filename
+                scp $WORKLOAD_FILENAME $client:$BENCHMARK_HOME/workloads/testWorkloads/
+            fi
             scp /tmp/pulsar-temp.yaml $client:$BENCHMARK_HOME/driver-pulsar/pulsar-temp.yaml
-            filename="$file_beg$i$file_end"
-            scp $BENCHMARK_HOME/$DATA_DIR/$filename $client:$BENCHMARK_HOME/locations/$filename
-            scp $WORKLOAD_FILENAME $client:$BENCHMARK_HOME/workloads/testWorkloads/
             dirname="$file_beg$i"
             ssh $client "rm -rf $BENCHMARK_HOME/output/$dirname; mkdir $BENCHMARK_HOME/output/$dirname"
             i=$((i+1))
@@ -70,16 +74,24 @@ stop_cluster()
 start_benchmark_workers()
 {
     i=0
-
     for client in $CLIENTS
     do
-        filename="$file_beg$i$file_end"
         dirname="$file_beg$i"
         if [ "$i" -eq 0 ]
         then
             ssh $client "cd $BENCHMARK_HOME; ./bin/app-benchmark.sh --drivers driver-pulsar/$DRIVER_CONFIG \
             --outdir output/$dirname indexConfig.yaml > output/$dirname/application-benchmark.out &"
+        elif [ "$i" -eq 1 ]
+        then
+            sleep 60s
+            t=$((i-1))
+            filename="$file_beg$t$file_end"
+            ssh $client "cd $BENCHMARK_HOME; ./bin/benchmark --drivers driver-pulsar/$DRIVER_CONFIG \
+                --locations locations/$filename --outputDir output/$dirname \
+                $WORKLOAD_FILENAME > output/$dirname/benchmark.out &"
         else
+            t=$((i-1))
+            filename="$file_beg$t$file_end"
             ssh $client "cd $BENCHMARK_HOME; ./bin/benchmark --drivers driver-pulsar/$DRIVER_CONFIG \
                 --locations locations/$filename --outputDir output/$dirname \
                 $WORKLOAD_FILENAME > output/$dirname/benchmark.out &"
@@ -102,26 +114,26 @@ collect_results()
     for client in $CLIENTS
     do
         dirname="$file_beg$i"
-        scp -r $client:$BENCHMARK_HOME/output/$dirname $BENCHMARK_HOME/output/output_static_trial/$dirname
-        cd $BENCHMARK_HOME/output/output_static_trial/$dirname/
+        scp -r $client:$BENCHMARK_HOME/output/$dirname $BENCHMARK_HOME/output/output_mobile_trial/$dirname
+        cd $BENCHMARK_HOME/output/output_mobile_trial/$dirname/
         f=(`ls`)
         
         if [ "$i" -eq 0 ]
         then
-            app_json=json_filename=application_C_$NUM_CLIENTS"_I_"$ITER"_"$dirname.json 
+            app_json=application_C_$NUM_CLIENTS"_I_"$ITER"_"$dirname.json 
             app_out=application_C_$NUM_CLIENTS"_I_"$ITER"_"$dirname.out
             cp ${f[0]} ../$app_json
             cp ${f[1]} ../$app_out
         else
             json_filename=C_$NUM_CLIENTS"_I_"$ITER"_"$dirname.json
             out_filename=C_$NUM_CLIENTS"_I_"$ITER"_"$dirname.out
-            cp ${f[0]} ../$json_filename
-            cp ${f[1]} ../$out_filename
+            cp ${f[1]} ../$json_filename
+            cp ${f[0]} ../$out_filename
         fi
         cd ..
         rm -rf $dirname
         cd $BENCHMARK_HOME
-        scp -r $client:$BENCHMARK_HOME/benchmark.out $BENCHMARK_HOME/output/output_static_trial/$out_filename
+        scp -r $client:$BENCHMARK_HOME/benchmark.out $BENCHMARK_HOME/output/output_mobile_trial/$out_filename
         i=$((i+1))
     done
 }
@@ -157,6 +169,6 @@ start_cluster $BROKER $PULSAR_HOME
 copy_config_data
 start_benchmark_workers
 
-sleep 4m
+sleep 2m
 
 collect_results

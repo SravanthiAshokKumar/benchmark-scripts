@@ -98,14 +98,14 @@ collect_results()
         dirname="$file_beg$i"
         json_filename=C_$NUM_CLIENTS"_I_"$ITER"_"$dirname.json
         out_filename=C_$NUM_CLIENTS"_I_"$ITER"_"$dirname.out
-	    scp -r $client:$BENCHMARK_HOME/output/$dirname $BENCHMARK_HOME/output/output_mobile_locations_interval_3/$dirname
-        cd $BENCHMARK_HOME/output/output_mobile_locations_interval_3/$dirname/
+	    scp -r $client:$BENCHMARK_HOME/output/$dirname $BENCHMARK_HOME/output/output_static_benchmark/$dirname
+        cd $BENCHMARK_HOME/output/output_static_benchmark/$dirname/
         f=(`ls`)
         cp ${f[0]} ../$json_filename
         cd ..
         rm -rf $dirname
         cd $BENCHMARK_HOME
-        scp -r $client:$BENCHMARK_HOME/benchmark.out $BENCHMARK_HOME/output/output_mobile_locations_interval_3/$out_filename
+        scp -r $client:$BENCHMARK_HOME/benchmark.out $BENCHMARK_HOME/output/output_static_benchmark/$out_filename
         i=$((i+1))
     done
 }

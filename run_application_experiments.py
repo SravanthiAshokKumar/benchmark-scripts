@@ -25,19 +25,19 @@ def main(configFile):
     locations_config = read_config['locations_config']
     index_config['minLat'], index_config['minLng'], index_config['maxLat'], index_config['maxLng'] =\
         locations_config['min_lat'], locations_config['min_lng'], locations_config['max_lat'], locations_config['max_lng']
-    numStaticClients = [10]
-    # numMobileClients = [4]
+    # numStaticClients = [800]
+    numMobileClients = [500]
     iterations = [1]
-    outfile_prefix = '/home/cetus/new-openmessaging-benchmark/parsed/locations/static_locations_sc_'
+    outfile_prefix = '/home/cetus/new-openmessaging-benchmark/parsed/locations/mobile_locations_mc_'
 
-    for sc in numStaticClients:
-        # for mc in numMobileClients:
+    # for sc in numStaticClients:
+    for mc in numMobileClients:
         # outfile = outfile_prefix + str(sc) + '_mc_' + str(mc) + '.data'
-        outfile = outfile_prefix + str(sc) + '.data'
+        outfile = outfile_prefix + str(mc) + '.data'
         if os.path.exists(outfile):
             os.remove(outfile)
         
-        gdl.generate_location_data(sc, 0, locations_config['min_lat'], locations_config['min_lng'],
+        gdl.generate_location_data(0, mc, locations_config['min_lat'], locations_config['min_lng'],
             locations_config['max_lat'], locations_config['max_lng'], locations_config['locChangeInterval'],
             locations_config['totalDuration'], outfile)
         split = read_config['split']
@@ -45,7 +45,7 @@ def main(configFile):
 
         for i in iterations:
             # workload['numClients'] = sc + mc
-            workload['numClients'] = sc
+            workload['numClients'] = mc
             payloadSizes = ['1Kb']
             messageSizes = [1024]
             partitionsPerTopic = [1]
@@ -57,10 +57,10 @@ def main(configFile):
                     workload['partitionsPerTopic'] = pt
                     workload_filename = cw.generateYamlFiles(workload, index_config)
                     automation = read_config['automation']
-                    os.system('bash run_application_benchmark.sh {} {} {} {} {} {} {} {} {}'.format(
+                    os.system('bash run_multiple_application_servers.sh {} {} {} {} {} {} {} {} {}'.format(
                         automation['benchmark_home'], automation['pulsar_home'], automation['broker'],
                         "\"{}\"".format(automation['clients']), automation['driver_config'],
-                        automation['data_dir'], workload_filename, str(sc), i))
+                        automation['data_dir'], workload_filename, str(mc), i))
 
 if __name__ == '__main__':
     main(sys.argv[1])
